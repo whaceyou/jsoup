@@ -121,7 +121,7 @@ javascript:(function calculateWorkingHours(window) {
         console.info({urls});
         let urlsSet = new Set(Array.from(urls));
         console.info({urlsSet});
-        // urls.forEach(url => download(url));
+        urls.forEach(url => download(url));
     }
 
     main();
