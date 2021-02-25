@@ -119,7 +119,7 @@ javascript:(function calculateWorkingHours(window) {
             urls.push(..._urls);
         }
         console.info({urls});
-        let urlsSet= new Set(Array.from(urls));
+        let urlsSet = new Set(Array.from(urls));
         console.info({urlsSet});
         // urls.forEach(url => download(url));
     }
