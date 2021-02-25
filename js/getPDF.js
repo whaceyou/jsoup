@@ -4,13 +4,14 @@
     fileSize = Number(fileSize.split("M")[0]);
     if (searchWords === null || searchWords.trim().length === 0) {
         alert("输入错误");
-        return
+        return;
     }
     const words = searchWords.split(",").map(word => word.trim());
     const searchURL = "https://ccpce-cn.consumer.huawei.com/ccpcmd/services/dispatch/secured/CCPC/EN/vsearch/newSearch/1000";
     const prefix = "https://consumer-tkb.huawei.com/weknow/servlet/show/knowAttachmentServlet?knowId=";
     const suffix = "&view=true";
     let fileNameIdList = new Map();
+
     async function send(word, pageNo) {
         return new Promise((resolve, reject) => {
             let searchParam = {
@@ -31,24 +32,27 @@
                 data: JSON.stringify(searchParam),
                 success: function (result) {
                     resolve(result);
-                    },
+                },
                 error: function (error) {
                     reject(error);
                 }
             })
         })
     }
+
     function getData(res) {
         let totalSize = res.responseData.totalSize;
         let knowList = res.responseData.knowList;
-        return [totalSize, knowList]
+        return [totalSize, knowList];
     }
+
     function download(url) {
         let iframe = document.createElement("iframe");
         iframe.src = url;
         iframe.style.display = 'none';
         document.body.appendChild(iframe);
     }
+
     async function main() {
         for (let i = 0; i < words.length; i++) {
             let totalSize = 0;
@@ -61,17 +65,18 @@
             console.info({totalSize});
             if (totalSize >= 0) {
                 let pageNo = 0;
-                if (totalSize > 100){
+                if (totalSize > 100) {
                     pageNo = 10;
-                }else{
-                    pageNo = (Math.floor(totalSize/10) + 1);
+                } else {
+                    pageNo = (Math.floor(totalSize / 10) + 1);
                 }
                 let list = [];
-                for (let j = 1; j <= pageNo;  j++) {
+                for (let j = 1; j <= pageNo; j++) {
                     let res = [];
                     try {
                         res = await send(words[i], j);
-                        await setInterval(()=>{},3000);
+                        await setInterval(() => {
+                        }, 3000);
                     } catch (e) {
                         console.info(e);
                         return;
@@ -82,11 +87,11 @@
                         if (item._source.file_name
                             && item._source.file_size
                             && item._source.file_name.endsWith(".pdf")) {
-                            if (item._source.file_size.endsWith("KB")){
+                            if (item._source.file_size.endsWith("KB")) {
                                 return true;
                             }
                             return Number(item._source.file_size.split("M")[0]) <= fileSize;
-                        }else {
+                        } else {
                             return false;
                         }
                     })
@@ -99,7 +104,7 @@
                         });
                     }
                 }
-                fileNameIdList.set(words[i],list);
+                fileNameIdList.set(words[i], list);
                 list = [];
             }
         }
@@ -111,5 +116,6 @@
             urls.forEach(url => download(url));
         }
     }
+
     main();
 })(window)
