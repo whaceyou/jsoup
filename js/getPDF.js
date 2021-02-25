@@ -1,4 +1,4 @@
-(function calculateWorkingHours(window) {
+javascript:(function calculateWorkingHours(window) {
     let searchWords = prompt("请输入搜索的关键字,以逗号隔开", "指南");
     let fileSize = prompt("请输入目标文件大小(只输入数字即可,单位:M)", "30");
     fileSize = Number(fileSize.split("M")[0]);
@@ -24,7 +24,7 @@
                 qAppName: "ServiceOfficial",
                 scenarioDuplicate: true,
                 site: "CN"
-            }
+            };
             $.ajax({
                 type: "POST",
                 url: searchURL,
@@ -36,7 +36,7 @@
                 error: function (error) {
                     reject(error);
                 }
-            })
+            });
         })
     }
 
@@ -63,7 +63,7 @@
                 console.info(e);
             }
             console.info({totalSize});
-            if (totalSize >= 0) {
+            if (totalSize > 0) {
                 let pageNo = 0;
                 if (totalSize > 100) {
                     pageNo = 10;
@@ -75,8 +75,11 @@
                     let res = [];
                     try {
                         res = await send(words[i], j);
-                        await setInterval(() => {
-                        }, 3000);
+                        await new Promise(((resolve, reject) => {
+                            setTimeout(function () {
+                                resolve();
+                            }, 500);
+                        }));
                     } catch (e) {
                         console.info(e);
                         return;
@@ -86,7 +89,8 @@
                     let dList = knowList.filter(item => {
                         if (item._source.file_name
                             && item._source.file_size
-                            && item._source.file_name.endsWith(".pdf")) {
+                            && item._source.file_name.endsWith(".pdf")
+                            && !(item._source.file_name.includes("认证信息"))) {
                             if (item._source.file_size.endsWith("KB")) {
                                 return true;
                             }
@@ -94,7 +98,7 @@
                         } else {
                             return false;
                         }
-                    })
+                    });
                     if (dList.length >= 1) {
                         dList.forEach(item => {
                             let obj = {};
@@ -109,12 +113,15 @@
             }
         }
         console.info({fileNameIdList});
+        let urls = [];
         for (let list of fileNameIdList.values()) {
-            let urls = list.map(obj => obj["url"]);
-            urls = new Set(Array.from(urls));
-            console.info({urls});
-            urls.forEach(url => download(url));
+            let _urls = list.map(obj => obj["url"]);
+            urls.push(..._urls);
         }
+        console.info({urls});
+        let urlsSet= new Set(Array.from(urls));
+        console.info({urlsSet});
+        // urls.forEach(url => download(url));
     }
 
     main();
