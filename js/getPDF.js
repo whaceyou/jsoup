@@ -12,7 +12,7 @@ javascript:(function calculateWorkingHours(window) {
     const suffix = "&view=true";
     let fileNameIdList = new Map();
 
-    async function send(word, pageNo) {
+    function send(word, pageNo) {
         return new Promise((resolve, reject) => {
             let searchParam = {
                 knowledgeType: "3",
@@ -41,9 +41,7 @@ javascript:(function calculateWorkingHours(window) {
     }
 
     function getData(res) {
-        let totalSize = res.responseData.totalSize;
-        let knowList = res.responseData.knowList;
-        return [totalSize, knowList];
+        return [res["responseData"]["totalSize"], res["responseData"]["knowList"]];
     }
 
     function download(url) {
@@ -53,48 +51,51 @@ javascript:(function calculateWorkingHours(window) {
         document.body.appendChild(iframe);
     }
 
+    function sleep(second) {
+        return new Promise(((resolve) => {
+            setTimeout(function () {
+                resolve();
+            }, second * 1000);
+        }));
+
+    }
+
     async function main() {
         for (let i = 0; i < words.length; i++) {
             let totalSize = 0;
             try {
+                await sleep(Math.ceil(Math.random() * 10))
                 const res = await send(words[i], 1);
                 totalSize = getData(res)[0];
             } catch (e) {
                 console.info(e);
+                continue;
             }
             console.info({totalSize});
             if (totalSize > 0) {
-                let pageNo = 0;
-                if (totalSize > 100) {
-                    pageNo = 10;
-                } else {
-                    pageNo = (Math.floor(totalSize / 10) + 1);
-                }
+                let pageNo = totalSize > 100 ? 10 : Math.ceil(totalSize / 10);
                 let list = [];
                 for (let j = 1; j <= pageNo; j++) {
                     let res = [];
                     try {
+                        await sleep(Math.ceil(Math.random() * 10));
                         res = await send(words[i], j);
-                        await new Promise(((resolve, reject) => {
-                            setTimeout(function () {
-                                resolve();
-                            }, 500);
-                        }));
                     } catch (e) {
                         console.info(e);
-                        return;
+                        continue;
                     }
                     let knowList = getData(res)[1];
                     console.info({knowList});
                     let dList = knowList.filter(item => {
-                        if (item._source.file_name
-                            && item._source.file_size
-                            && item._source.file_name.endsWith(".pdf")
-                            && !(item._source.file_name.includes("认证信息"))) {
-                            if (item._source.file_size.endsWith("KB")) {
+                        const {file_size, file_name} = item["_source"];
+                        if (file_name
+                            && file_size
+                            && file_name.endsWith(".pdf")
+                            && !(file_name.includes("认证信息"))) {
+                            if (file_size.endsWith("KB")) {
                                 return true;
                             }
-                            return Number(item._source.file_size.split("M")[0]) <= fileSize;
+                            return Number(file_size.split("M")[0]) <= fileSize;
                         } else {
                             return false;
                         }
@@ -102,8 +103,8 @@ javascript:(function calculateWorkingHours(window) {
                     if (dList.length >= 1) {
                         dList.forEach(item => {
                             let obj = {};
-                            obj['fileName'] = item._source.file_name;
-                            obj['url'] = prefix + item._id + suffix;
+                            obj['fileName'] = item["_source"]["file_name"];
+                            obj['url'] = prefix + item["_id"] + suffix;
                             list.push(obj);
                         });
                     }
@@ -121,8 +122,11 @@ javascript:(function calculateWorkingHours(window) {
         console.info({urls});
         let urlsSet = new Set(Array.from(urls));
         console.info({urlsSet});
-        urls.forEach(url => download(url));
+        for (const url of urls) {
+            await sleep(2);
+            download(url);
+        }
     }
 
-    main();
+    main().then();
 })(window)
